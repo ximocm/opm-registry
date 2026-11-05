@@ -1,0 +1,385 @@
+{
+  "format_version": 1,
+  "name": "SARS-CoV-2 small RNA quality control",
+  "description": "Tutorial exercise 1, one sample per work folder: raw QC, 3-prime adapter removal, Q30/5-prime fixed trimming, poly-A and length filtering, final QC and MultiQC.",
+  "pipeline": {
+    "steps": [
+      {
+        "id": "stage_inputs",
+        "name": "Stage selected FASTQ",
+        "description": "Stage selected inputs under stable names for predictable FastQC report paths.",
+        "command": "cp {reads} {staged}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "reads",
+            "label": "Reads",
+            "type": "file",
+            "required": true,
+            "default": "Input/SARS_cov_2_1.fastq"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "staged",
+            "label": "Staged",
+            "path": "steps/stage_inputs/raw.fastq"
+          }
+        ],
+        "parameters": [],
+        "dependencies": []
+      },
+      {
+        "id": "raw_fastqc",
+        "name": "Raw Fastqc",
+        "description": "Registry tool: fastqc@0.1.0.",
+        "command": "mkdir -p {qc_dir} && fastqc --threads {threads} --outdir {qc_dir} {reads}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "reads",
+            "label": "Reads",
+            "type": "file",
+            "required": true,
+            "source_step": "stage_inputs",
+            "source_output": "staged"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "qc_dir",
+            "label": "Qc dir",
+            "path": "outputs/raw_fastqc"
+          },
+          {
+            "key": "html_1",
+            "label": "Html 1",
+            "path": "outputs/raw_fastqc/raw_fastqc.html"
+          },
+          {
+            "key": "zip_1",
+            "label": "Zip 1",
+            "path": "outputs/raw_fastqc/raw_fastqc.zip"
+          }
+        ],
+        "parameters": [
+          {
+            "key": "threads",
+            "label": "Threads",
+            "type": "integer",
+            "required": true,
+            "min": 1,
+            "max": 64,
+            "default": 1
+          }
+        ],
+        "dependencies": [
+          "stage_inputs"
+        ]
+      },
+      {
+        "id": "trim_adapter",
+        "name": "Trim Adapter",
+        "description": "Registry tool: cutadapt-single@0.1.0.",
+        "command": "cutadapt --cores {threads} -a {adapter3} -o {trimmed} {reads} > {report}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "reads",
+            "label": "Reads",
+            "type": "file",
+            "required": true,
+            "source_step": "stage_inputs",
+            "source_output": "staged"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "trimmed",
+            "label": "Trimmed",
+            "path": "steps/trim_adapter/trimmed.fastq"
+          },
+          {
+            "key": "report",
+            "label": "Report",
+            "path": "outputs/trim_adapter.txt"
+          }
+        ],
+        "parameters": [
+          {
+            "key": "threads",
+            "label": "Threads",
+            "type": "integer",
+            "required": true,
+            "min": 1,
+            "max": 64,
+            "default": 1
+          },
+          {
+            "key": "adapter3",
+            "label": "Adapter3",
+            "type": "text",
+            "required": true,
+            "default": "AGATCGGAAGAG"
+          }
+        ],
+        "dependencies": [
+          "stage_inputs",
+          "raw_fastqc"
+        ]
+      },
+      {
+        "id": "trim_quality",
+        "name": "Trim Quality",
+        "description": "Registry tool: cutadapt-single@0.1.0.",
+        "command": "cutadapt --cores {threads} -q {quality} -u {cut} -o {trimmed} {reads} > {report}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "reads",
+            "label": "Reads",
+            "type": "file",
+            "required": true,
+            "source_step": "trim_adapter",
+            "source_output": "trimmed"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "trimmed",
+            "label": "Trimmed",
+            "path": "steps/trim_quality/trimmed.fastq"
+          },
+          {
+            "key": "report",
+            "label": "Report",
+            "path": "outputs/trim_quality.txt"
+          }
+        ],
+        "parameters": [
+          {
+            "key": "threads",
+            "label": "Threads",
+            "type": "integer",
+            "required": true,
+            "min": 1,
+            "max": 64,
+            "default": 1
+          },
+          {
+            "key": "quality",
+            "label": "Quality",
+            "type": "integer",
+            "required": true,
+            "min": 0,
+            "max": 93,
+            "default": 30
+          },
+          {
+            "key": "cut",
+            "label": "Cut",
+            "type": "integer",
+            "required": true,
+            "default": 3
+          }
+        ],
+        "dependencies": [
+          "trim_adapter"
+        ]
+      },
+      {
+        "id": "trim_polya",
+        "name": "Trim Polya",
+        "description": "Registry tool: cutadapt-single@0.1.0.",
+        "command": "cutadapt --cores {threads} -a {adapter3} -m {min_length} -M {max_length} -o {trimmed} {reads} > {report}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "reads",
+            "label": "Reads",
+            "type": "file",
+            "required": true,
+            "source_step": "trim_quality",
+            "source_output": "trimmed"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "trimmed",
+            "label": "Trimmed",
+            "path": "steps/trim_polya/final.fastq"
+          },
+          {
+            "key": "report",
+            "label": "Report",
+            "path": "outputs/trim_polya.txt"
+          }
+        ],
+        "parameters": [
+          {
+            "key": "threads",
+            "label": "Threads",
+            "type": "integer",
+            "required": true,
+            "min": 1,
+            "max": 64,
+            "default": 1
+          },
+          {
+            "key": "adapter3",
+            "label": "Adapter3",
+            "type": "text",
+            "required": true,
+            "default": "A{10}"
+          },
+          {
+            "key": "min_length",
+            "label": "Min length",
+            "type": "integer",
+            "required": true,
+            "min": 0,
+            "default": 10
+          },
+          {
+            "key": "max_length",
+            "label": "Max length",
+            "type": "integer",
+            "required": true,
+            "min": 1,
+            "default": 35
+          }
+        ],
+        "dependencies": [
+          "trim_quality"
+        ]
+      },
+      {
+        "id": "final_fastqc",
+        "name": "Final Fastqc",
+        "description": "Registry tool: fastqc@0.1.0.",
+        "command": "mkdir -p {qc_dir} && fastqc --threads {threads} --outdir {qc_dir} {reads}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "reads",
+            "label": "Reads",
+            "type": "file",
+            "required": true,
+            "source_step": "trim_polya",
+            "source_output": "trimmed"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "qc_dir",
+            "label": "Qc dir",
+            "path": "outputs/final_fastqc"
+          },
+          {
+            "key": "html_1",
+            "label": "Html 1",
+            "path": "outputs/final_fastqc/final_fastqc.html"
+          },
+          {
+            "key": "zip_1",
+            "label": "Zip 1",
+            "path": "outputs/final_fastqc/final_fastqc.zip"
+          }
+        ],
+        "parameters": [
+          {
+            "key": "threads",
+            "label": "Threads",
+            "type": "integer",
+            "required": true,
+            "min": 1,
+            "max": 64,
+            "default": 1
+          }
+        ],
+        "dependencies": [
+          "trim_polya"
+        ]
+      },
+      {
+        "id": "compare_reports",
+        "name": "Compare raw and processed quality",
+        "description": "Registry tool: multiqc@0.1.0.",
+        "command": "mkdir -p outputs/comparison && multiqc --force --require-logs --module fastqc --outdir outputs/comparison --filename multiqc_report.html {raw_reports} {final_reports}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "raw_reports",
+            "label": "Raw reports",
+            "type": "folder",
+            "required": true,
+            "source_step": "raw_fastqc",
+            "source_output": "qc_dir"
+          },
+          {
+            "key": "final_reports",
+            "label": "Final reports",
+            "type": "folder",
+            "required": true,
+            "source_step": "final_fastqc",
+            "source_output": "qc_dir"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "report",
+            "label": "Report",
+            "path": "outputs/comparison/multiqc_report.html"
+          },
+          {
+            "key": "data",
+            "label": "Data",
+            "path": "outputs/comparison/multiqc_report_data"
+          }
+        ],
+        "parameters": [],
+        "dependencies": [
+          "raw_fastqc",
+          "final_fastqc"
+        ]
+      }
+    ]
+  },
+  "layout": {
+    "stage_inputs": {
+      "x": 80,
+      "y": 120
+    },
+    "raw_fastqc": {
+      "x": 410,
+      "y": 120
+    },
+    "trim_adapter": {
+      "x": 740,
+      "y": 120
+    },
+    "trim_quality": {
+      "x": 1070,
+      "y": 120
+    },
+    "trim_polya": {
+      "x": 1400,
+      "y": 120
+    },
+    "final_fastqc": {
+      "x": 1730,
+      "y": 120
+    },
+    "compare_reports": {
+      "x": 2060,
+      "y": 120
+    }
+  }
+}

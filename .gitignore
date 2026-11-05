@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+.pipeline-manager/
+*.fastq
+*.fastq.gz
+*.fq
+*.fq.gz
+work/
+outputs/
+target/
+.opm-checkout/
+.qc-env/

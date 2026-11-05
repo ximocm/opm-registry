@@ -1,0 +1,378 @@
+{
+  "format_version": 1,
+  "name": "miRNA precursor quality control",
+  "description": "Tutorial exercise 3: raw QC, 5-prime and 3-prime adapters, Q10 and 17-30nt filtering, final QC and MultiQC. Adapter orientation is made explicit.",
+  "pipeline": {
+    "steps": [
+      {
+        "id": "stage_inputs",
+        "name": "Stage selected FASTQ",
+        "description": "Stage selected inputs under stable names for predictable FastQC report paths.",
+        "command": "cp {reads} {staged}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "reads",
+            "label": "Reads",
+            "type": "file",
+            "required": true,
+            "default": "Input/f010_raw_mirna.fastq"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "staged",
+            "label": "Staged",
+            "path": "steps/stage_inputs/raw.fastq"
+          }
+        ],
+        "parameters": [],
+        "dependencies": []
+      },
+      {
+        "id": "raw_fastqc",
+        "name": "Raw Fastqc",
+        "description": "Registry tool: fastqc@0.1.0.",
+        "command": "mkdir -p {qc_dir} && fastqc --threads {threads} --outdir {qc_dir} {reads}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "reads",
+            "label": "Reads",
+            "type": "file",
+            "required": true,
+            "source_step": "stage_inputs",
+            "source_output": "staged"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "qc_dir",
+            "label": "Qc dir",
+            "path": "outputs/raw_fastqc"
+          },
+          {
+            "key": "html_1",
+            "label": "Html 1",
+            "path": "outputs/raw_fastqc/raw_fastqc.html"
+          },
+          {
+            "key": "zip_1",
+            "label": "Zip 1",
+            "path": "outputs/raw_fastqc/raw_fastqc.zip"
+          }
+        ],
+        "parameters": [
+          {
+            "key": "threads",
+            "label": "Threads",
+            "type": "integer",
+            "required": true,
+            "min": 1,
+            "max": 64,
+            "default": 1
+          }
+        ],
+        "dependencies": [
+          "stage_inputs"
+        ]
+      },
+      {
+        "id": "trim_5_prime_adapter",
+        "name": "Trim 5 Prime Adapter",
+        "description": "Registry tool: cutadapt-single@0.1.0.",
+        "command": "cutadapt --cores {threads} -g {adapter5} -o {trimmed} {reads} > {report}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "reads",
+            "label": "Reads",
+            "type": "file",
+            "required": true,
+            "source_step": "stage_inputs",
+            "source_output": "staged"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "trimmed",
+            "label": "Trimmed",
+            "path": "steps/trim_5_prime_adapter/trimmed.fastq"
+          },
+          {
+            "key": "report",
+            "label": "Report",
+            "path": "outputs/trim_5_prime_adapter.txt"
+          }
+        ],
+        "parameters": [
+          {
+            "key": "threads",
+            "label": "Threads",
+            "type": "integer",
+            "required": true,
+            "min": 1,
+            "max": 64,
+            "default": 1
+          },
+          {
+            "key": "adapter5",
+            "label": "Adapter5",
+            "type": "text",
+            "required": true,
+            "default": "CTGGGAAATCACCATAAACGTGAAATGTCTTTGGATTTGGGAATCTTATAAGTTCTGTATGAGACCACTCTAAAAA"
+          }
+        ],
+        "dependencies": [
+          "stage_inputs",
+          "raw_fastqc"
+        ]
+      },
+      {
+        "id": "trim_3_prime_adapter",
+        "name": "Trim 3 Prime Adapter",
+        "description": "Registry tool: cutadapt-single@0.1.0.",
+        "command": "cutadapt --cores {threads} -a {adapter3} -o {trimmed} {reads} > {report}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "reads",
+            "label": "Reads",
+            "type": "file",
+            "required": true,
+            "source_step": "trim_5_prime_adapter",
+            "source_output": "trimmed"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "trimmed",
+            "label": "Trimmed",
+            "path": "steps/trim_3_prime_adapter/trimmed.fastq"
+          },
+          {
+            "key": "report",
+            "label": "Report",
+            "path": "outputs/trim_3_prime_adapter.txt"
+          }
+        ],
+        "parameters": [
+          {
+            "key": "threads",
+            "label": "Threads",
+            "type": "integer",
+            "required": true,
+            "min": 1,
+            "max": 64,
+            "default": 1
+          },
+          {
+            "key": "adapter3",
+            "label": "Adapter3",
+            "type": "text",
+            "required": true,
+            "default": "CTTTTTTTCGTCCTTTCCACAAGATATATAAAGCCAAGAAATCGAAATACTTTCAAGTTACGGTAAGC"
+          }
+        ],
+        "dependencies": [
+          "trim_5_prime_adapter"
+        ]
+      },
+      {
+        "id": "filter_quality_length",
+        "name": "Filter Quality Length",
+        "description": "Registry tool: cutadapt-single@0.1.0.",
+        "command": "cutadapt --cores {threads} -q {quality} -m {min_length} -M {max_length} -o {trimmed} {reads} > {report}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "reads",
+            "label": "Reads",
+            "type": "file",
+            "required": true,
+            "source_step": "trim_3_prime_adapter",
+            "source_output": "trimmed"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "trimmed",
+            "label": "Trimmed",
+            "path": "steps/filter_quality_length/final.fastq"
+          },
+          {
+            "key": "report",
+            "label": "Report",
+            "path": "outputs/filter_quality_length.txt"
+          }
+        ],
+        "parameters": [
+          {
+            "key": "threads",
+            "label": "Threads",
+            "type": "integer",
+            "required": true,
+            "min": 1,
+            "max": 64,
+            "default": 1
+          },
+          {
+            "key": "quality",
+            "label": "Quality",
+            "type": "integer",
+            "required": true,
+            "min": 0,
+            "max": 93,
+            "default": 10
+          },
+          {
+            "key": "min_length",
+            "label": "Min length",
+            "type": "integer",
+            "required": true,
+            "min": 0,
+            "default": 17
+          },
+          {
+            "key": "max_length",
+            "label": "Max length",
+            "type": "integer",
+            "required": true,
+            "min": 1,
+            "default": 30
+          }
+        ],
+        "dependencies": [
+          "trim_3_prime_adapter"
+        ]
+      },
+      {
+        "id": "final_fastqc",
+        "name": "Final Fastqc",
+        "description": "Registry tool: fastqc@0.1.0.",
+        "command": "mkdir -p {qc_dir} && fastqc --threads {threads} --outdir {qc_dir} {reads}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "reads",
+            "label": "Reads",
+            "type": "file",
+            "required": true,
+            "source_step": "filter_quality_length",
+            "source_output": "trimmed"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "qc_dir",
+            "label": "Qc dir",
+            "path": "outputs/final_fastqc"
+          },
+          {
+            "key": "html_1",
+            "label": "Html 1",
+            "path": "outputs/final_fastqc/final_fastqc.html"
+          },
+          {
+            "key": "zip_1",
+            "label": "Zip 1",
+            "path": "outputs/final_fastqc/final_fastqc.zip"
+          }
+        ],
+        "parameters": [
+          {
+            "key": "threads",
+            "label": "Threads",
+            "type": "integer",
+            "required": true,
+            "min": 1,
+            "max": 64,
+            "default": 1
+          }
+        ],
+        "dependencies": [
+          "filter_quality_length"
+        ]
+      },
+      {
+        "id": "compare_reports",
+        "name": "Compare raw and processed quality",
+        "description": "Registry tool: multiqc@0.1.0.",
+        "command": "mkdir -p outputs/comparison && multiqc --force --require-logs --module fastqc --outdir outputs/comparison --filename multiqc_report.html {raw_reports} {final_reports}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "raw_reports",
+            "label": "Raw reports",
+            "type": "folder",
+            "required": true,
+            "source_step": "raw_fastqc",
+            "source_output": "qc_dir"
+          },
+          {
+            "key": "final_reports",
+            "label": "Final reports",
+            "type": "folder",
+            "required": true,
+            "source_step": "final_fastqc",
+            "source_output": "qc_dir"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "report",
+            "label": "Report",
+            "path": "outputs/comparison/multiqc_report.html"
+          },
+          {
+            "key": "data",
+            "label": "Data",
+            "path": "outputs/comparison/multiqc_report_data"
+          }
+        ],
+        "parameters": [],
+        "dependencies": [
+          "raw_fastqc",
+          "final_fastqc"
+        ]
+      }
+    ]
+  },
+  "layout": {
+    "stage_inputs": {
+      "x": 80,
+      "y": 120
+    },
+    "raw_fastqc": {
+      "x": 410,
+      "y": 120
+    },
+    "trim_5_prime_adapter": {
+      "x": 740,
+      "y": 120
+    },
+    "trim_3_prime_adapter": {
+      "x": 1070,
+      "y": 120
+    },
+    "filter_quality_length": {
+      "x": 1400,
+      "y": 120
+    },
+    "final_fastqc": {
+      "x": 1730,
+      "y": 120
+    },
+    "compare_reports": {
+      "x": 2060,
+      "y": 120
+    }
+  }
+}

@@ -1,0 +1,33 @@
+name: Validate registry
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: python3 scripts/validate_registry.py
+      - run: python3 -m unittest discover -s tests -v
+  native-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ximocm/OpenPipelineManager
+          ref: dea85448881b594a532d4bb7c61497c2fcdf8066
+          path: .opm-checkout
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          toolchain: stable
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends fastqc
+      - run: python3 -m venv .qc-env
+      - run: .qc-env/bin/pip install cutadapt==5.2 multiqc==1.35
+      - run: python3 scripts/check_opm.py --opm-root .opm-checkout --tools-bin .qc-env/bin

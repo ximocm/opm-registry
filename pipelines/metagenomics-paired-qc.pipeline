@@ -1,0 +1,393 @@
+{
+  "format_version": 1,
+  "name": "Metagenomics paired-end quality control",
+  "description": "Tutorial exercise 2: raw QC, 10-base 5-prime cuts in both mates, 10-base 3-prime cut in R2, final QC and MultiQC. Both mates remain in paired mode.",
+  "pipeline": {
+    "steps": [
+      {
+        "id": "stage_inputs",
+        "name": "Stage paired FASTQ inputs",
+        "description": "Stage selected inputs under stable names for predictable FastQC report paths.",
+        "command": "cp {read1} {staged1} && cp {read2} {staged2}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "read1",
+            "label": "Read1",
+            "type": "file",
+            "required": true,
+            "default": "Input/metagen_R1.fastq"
+          },
+          {
+            "key": "read2",
+            "label": "Read2",
+            "type": "file",
+            "required": true,
+            "default": "Input/metagen_R2.fastq"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "staged1",
+            "label": "Staged1",
+            "path": "steps/stage_inputs/raw_R1.fastq"
+          },
+          {
+            "key": "staged2",
+            "label": "Staged2",
+            "path": "steps/stage_inputs/raw_R2.fastq"
+          }
+        ],
+        "parameters": [],
+        "dependencies": []
+      },
+      {
+        "id": "raw_fastqc",
+        "name": "Raw Fastqc",
+        "description": "Registry tool: fastqc@0.1.0.",
+        "command": "mkdir -p {qc_dir} && fastqc --threads {threads} --outdir {qc_dir} {read1} {read2}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "read1",
+            "label": "Read1",
+            "type": "file",
+            "required": true,
+            "source_step": "stage_inputs",
+            "source_output": "staged1"
+          },
+          {
+            "key": "read2",
+            "label": "Read2",
+            "type": "file",
+            "required": true,
+            "source_step": "stage_inputs",
+            "source_output": "staged2"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "qc_dir",
+            "label": "Qc dir",
+            "path": "outputs/raw_fastqc"
+          },
+          {
+            "key": "html_1",
+            "label": "Html 1",
+            "path": "outputs/raw_fastqc/raw_R1_fastqc.html"
+          },
+          {
+            "key": "zip_1",
+            "label": "Zip 1",
+            "path": "outputs/raw_fastqc/raw_R1_fastqc.zip"
+          },
+          {
+            "key": "html_2",
+            "label": "Html 2",
+            "path": "outputs/raw_fastqc/raw_R2_fastqc.html"
+          },
+          {
+            "key": "zip_2",
+            "label": "Zip 2",
+            "path": "outputs/raw_fastqc/raw_R2_fastqc.zip"
+          }
+        ],
+        "parameters": [
+          {
+            "key": "threads",
+            "label": "Threads",
+            "type": "integer",
+            "required": true,
+            "min": 1,
+            "max": 64,
+            "default": 1
+          }
+        ],
+        "dependencies": [
+          "stage_inputs"
+        ]
+      },
+      {
+        "id": "trim_5_prime",
+        "name": "Trim 5 Prime",
+        "description": "Registry tool: cutadapt-paired@0.1.0.",
+        "command": "cutadapt --cores {threads} -u {cut1} -U {cut2} -o {trimmed1} -p {trimmed2} {read1} {read2} > {report}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "read1",
+            "label": "Read1",
+            "type": "file",
+            "required": true,
+            "source_step": "stage_inputs",
+            "source_output": "staged1"
+          },
+          {
+            "key": "read2",
+            "label": "Read2",
+            "type": "file",
+            "required": true,
+            "source_step": "stage_inputs",
+            "source_output": "staged2"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "trimmed1",
+            "label": "Trimmed1",
+            "path": "steps/trim_5_prime/trimmed_R1.fastq"
+          },
+          {
+            "key": "trimmed2",
+            "label": "Trimmed2",
+            "path": "steps/trim_5_prime/trimmed_R2.fastq"
+          },
+          {
+            "key": "report",
+            "label": "Report",
+            "path": "outputs/trim_5_prime.txt"
+          }
+        ],
+        "parameters": [
+          {
+            "key": "threads",
+            "label": "Threads",
+            "type": "integer",
+            "required": true,
+            "min": 1,
+            "max": 64,
+            "default": 1
+          },
+          {
+            "key": "cut1",
+            "label": "Cut1",
+            "type": "integer",
+            "required": true,
+            "default": 10
+          },
+          {
+            "key": "cut2",
+            "label": "Cut2",
+            "type": "integer",
+            "required": true,
+            "default": 10
+          }
+        ],
+        "dependencies": [
+          "stage_inputs",
+          "raw_fastqc"
+        ]
+      },
+      {
+        "id": "trim_r2_tail",
+        "name": "Trim R2 Tail",
+        "description": "Registry tool: cutadapt-paired@0.1.0.",
+        "command": "cutadapt --cores {threads} -u {cut1} -U {cut2} -o {trimmed1} -p {trimmed2} {read1} {read2} > {report}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "read1",
+            "label": "Read1",
+            "type": "file",
+            "required": true,
+            "source_step": "trim_5_prime",
+            "source_output": "trimmed1"
+          },
+          {
+            "key": "read2",
+            "label": "Read2",
+            "type": "file",
+            "required": true,
+            "source_step": "trim_5_prime",
+            "source_output": "trimmed2"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "trimmed1",
+            "label": "Trimmed1",
+            "path": "steps/trim_r2_tail/final_R1.fastq"
+          },
+          {
+            "key": "trimmed2",
+            "label": "Trimmed2",
+            "path": "steps/trim_r2_tail/final_R2.fastq"
+          },
+          {
+            "key": "report",
+            "label": "Report",
+            "path": "outputs/trim_r2_tail.txt"
+          }
+        ],
+        "parameters": [
+          {
+            "key": "threads",
+            "label": "Threads",
+            "type": "integer",
+            "required": true,
+            "min": 1,
+            "max": 64,
+            "default": 1
+          },
+          {
+            "key": "cut1",
+            "label": "Cut1",
+            "type": "integer",
+            "required": true,
+            "default": 0
+          },
+          {
+            "key": "cut2",
+            "label": "Cut2",
+            "type": "integer",
+            "required": true,
+            "default": -10
+          }
+        ],
+        "dependencies": [
+          "trim_5_prime"
+        ]
+      },
+      {
+        "id": "final_fastqc",
+        "name": "Final Fastqc",
+        "description": "Registry tool: fastqc@0.1.0.",
+        "command": "mkdir -p {qc_dir} && fastqc --threads {threads} --outdir {qc_dir} {read1} {read2}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "read1",
+            "label": "Read1",
+            "type": "file",
+            "required": true,
+            "source_step": "trim_r2_tail",
+            "source_output": "trimmed1"
+          },
+          {
+            "key": "read2",
+            "label": "Read2",
+            "type": "file",
+            "required": true,
+            "source_step": "trim_r2_tail",
+            "source_output": "trimmed2"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "qc_dir",
+            "label": "Qc dir",
+            "path": "outputs/final_fastqc"
+          },
+          {
+            "key": "html_1",
+            "label": "Html 1",
+            "path": "outputs/final_fastqc/final_R1_fastqc.html"
+          },
+          {
+            "key": "zip_1",
+            "label": "Zip 1",
+            "path": "outputs/final_fastqc/final_R1_fastqc.zip"
+          },
+          {
+            "key": "html_2",
+            "label": "Html 2",
+            "path": "outputs/final_fastqc/final_R2_fastqc.html"
+          },
+          {
+            "key": "zip_2",
+            "label": "Zip 2",
+            "path": "outputs/final_fastqc/final_R2_fastqc.zip"
+          }
+        ],
+        "parameters": [
+          {
+            "key": "threads",
+            "label": "Threads",
+            "type": "integer",
+            "required": true,
+            "min": 1,
+            "max": 64,
+            "default": 1
+          }
+        ],
+        "dependencies": [
+          "trim_r2_tail"
+        ]
+      },
+      {
+        "id": "compare_reports",
+        "name": "Compare raw and processed quality",
+        "description": "Registry tool: multiqc@0.1.0.",
+        "command": "mkdir -p outputs/comparison && multiqc --force --require-logs --module fastqc --outdir outputs/comparison --filename multiqc_report.html {raw_reports} {final_reports}",
+        "environment": "",
+        "working_directory": ".",
+        "inputs": [
+          {
+            "key": "raw_reports",
+            "label": "Raw reports",
+            "type": "folder",
+            "required": true,
+            "source_step": "raw_fastqc",
+            "source_output": "qc_dir"
+          },
+          {
+            "key": "final_reports",
+            "label": "Final reports",
+            "type": "folder",
+            "required": true,
+            "source_step": "final_fastqc",
+            "source_output": "qc_dir"
+          }
+        ],
+        "outputs": [
+          {
+            "key": "report",
+            "label": "Report",
+            "path": "outputs/comparison/multiqc_report.html"
+          },
+          {
+            "key": "data",
+            "label": "Data",
+            "path": "outputs/comparison/multiqc_report_data"
+          }
+        ],
+        "parameters": [],
+        "dependencies": [
+          "raw_fastqc",
+          "final_fastqc"
+        ]
+      }
+    ]
+  },
+  "layout": {
+    "stage_inputs": {
+      "x": 80,
+      "y": 120
+    },
+    "raw_fastqc": {
+      "x": 410,
+      "y": 120
+    },
+    "trim_5_prime": {
+      "x": 740,
+      "y": 120
+    },
+    "trim_r2_tail": {
+      "x": 1070,
+      "y": 120
+    },
+    "final_fastqc": {
+      "x": 1400,
+      "y": 120
+    },
+    "compare_reports": {
+      "x": 1730,
+      "y": 120
+    }
+  }
+}

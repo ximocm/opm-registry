@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "id": "multiqc",
+  "version": "0.1.0",
+  "name": "MultiQC FastQC comparison",
+  "description": "Combine FastQC reports from raw and processed data. Fails if no FastQC logs are found.",
+  "executable": "multiqc",
+  "homepage": "https://docs.seqera.io/multiqc/",
+  "version_arguments": [
+    "--version"
+  ],
+  "inputs": {
+    "reports": {
+      "type": "folder",
+      "description": "Directories containing FastQC ZIP reports.",
+      "required": true,
+      "multiple": true
+    }
+  },
+  "parameters": {},
+  "outputs": {
+    "outdir": {
+      "type": "folder",
+      "description": "Directory containing multiqc_report.html and supporting data.",
+      "required": true
+    }
+  },
+  "arguments": [
+    "--force",
+    "--require-logs",
+    "--module",
+    "fastqc",
+    "--outdir",
+    "{outdir}",
+    "--filename",
+    "multiqc_report.html",
+    "{reports}"
+  ],
+  "tested_software_version": "1.35"
+}

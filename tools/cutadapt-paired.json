@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "id": "cutadapt-paired",
+  "version": "0.1.0",
+  "name": "Cutadapt paired-end fixed trimming",
+  "description": "Trim paired-end reads together, retaining mate synchronization.",
+  "executable": "cutadapt",
+  "homepage": "https://cutadapt.readthedocs.io/",
+  "version_arguments": [
+    "--version"
+  ],
+  "inputs": {
+    "read1": {
+      "type": "file",
+      "description": "R1 FASTQ.",
+      "required": true
+    },
+    "read2": {
+      "type": "file",
+      "description": "R2 FASTQ.",
+      "required": true
+    }
+  },
+  "parameters": {
+    "threads": {
+      "type": "integer",
+      "description": "Number of worker threads.",
+      "required": false,
+      "min": 1,
+      "max": 64,
+      "default": 1
+    },
+    "cut1": {
+      "type": "integer",
+      "description": "Fixed cut for R1; negative trims the 3-prime end.",
+      "required": false,
+      "default": 0
+    },
+    "cut2": {
+      "type": "integer",
+      "description": "Fixed cut for R2; negative trims the 3-prime end.",
+      "required": false,
+      "default": 0
+    }
+  },
+  "outputs": {
+    "trimmed1": {
+      "type": "file",
+      "description": "Trimmed R1 FASTQ.",
+      "required": true
+    },
+    "trimmed2": {
+      "type": "file",
+      "description": "Trimmed R2 FASTQ.",
+      "required": true
+    },
+    "report": {
+      "type": "file",
+      "description": "Text trimming report.",
+      "required": true
+    }
+  },
+  "arguments": [
+    "--cores",
+    "{threads}",
+    "-u",
+    "{cut1}",
+    "-U",
+    "{cut2}",
+    "-o",
+    "{trimmed1}",
+    "-p",
+    "{trimmed2}",
+    "{read1}",
+    "{read2}"
+  ],
+  "stdout": "report",
+  "tested_software_version": "5.2"
+}
