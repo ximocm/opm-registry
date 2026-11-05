@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create original synthetic FASTQ fixtures; no course or study data are bundled."""
+"""Create small synthetic FASTQ fixtures for end-to-end quality-control checks."""
 
 import argparse
 from pathlib import Path

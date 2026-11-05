@@ -1,7 +1,7 @@
 {
   "format_version": 1,
   "name": "Metagenomics paired-end quality control",
-  "description": "Tutorial exercise 2: raw QC, 10-base 5-prime cuts in both mates, 10-base 3-prime cut in R2, final QC and MultiQC. Both mates remain in paired mode.",
+  "description": "Paired-end processing: raw QC, 10-base 5-prime cuts in both mates, 10-base 3-prime cut in R2, final QC and MultiQC. Both mates remain in paired mode.",
   "pipeline": {
     "steps": [
       {
