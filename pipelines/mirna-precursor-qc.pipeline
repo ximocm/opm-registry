@@ -1,7 +1,7 @@
 {
   "format_version": 1,
   "name": "miRNA precursor quality control",
-  "description": "Tutorial exercise 3: raw QC, 5-prime and 3-prime adapters, Q10 and 17-30nt filtering, final QC and MultiQC. Adapter orientation is made explicit.",
+  "description": "miRNA precursor processing: raw QC, 5-prime and 3-prime adapters, Q10 and 17-30nt filtering, final QC and MultiQC. Adapter orientation is made explicit.",
   "pipeline": {
     "steps": [
       {

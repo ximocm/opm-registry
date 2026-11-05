@@ -1,7 +1,7 @@
 {
   "format_version": 1,
   "name": "SARS-CoV-2 small RNA quality control",
-  "description": "Tutorial exercise 1, one sample per work folder: raw QC, 3-prime adapter removal, Q30/5-prime fixed trimming, poly-A and length filtering, final QC and MultiQC.",
+  "description": "One sample per work folder: raw QC, 3-prime adapter removal, Q30/5-prime fixed trimming, poly-A and length filtering, final QC and MultiQC.",
   "pipeline": {
     "steps": [
       {

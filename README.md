@@ -1,8 +1,10 @@
 # OPM Registry
 
 Biblioteca compartida de **herramientas independientes** y **pipelines de ejemplo**.
-Las herramientas se pueden invocar desde línea de comandos sin instalar Open
-Pipeline Manager. Las pipelines se distribuyen como un único archivo `.pipeline`
+Las herramientas se pueden invocar desde línea de comandos sin instalar
+[Open Pipeline Manager](https://github.com/ximocm/OpenPipelineManager). Consulta
+su [manual](https://github.com/ximocm/OpenPipelineManager/blob/main/MANUAL.md)
+para diseñar y ejecutar pipelines en la aplicación. Las pipelines se distribuyen como un único archivo `.pipeline`
 compatible con OPM 0.3.0, formato nativo 1.
 
 ## Contenido
@@ -14,15 +16,14 @@ compatible con OPM 0.3.0, formato nativo 1.
 | Cutadapt paired-end | [cutadapt-paired.json](tools/cutadapt-paired.json) | Recortes de R1/R2 conservando las parejas. |
 | MultiQC | [multiqc.json](tools/multiqc.json) | Comparación de los informes FastQC. |
 
-| Pipeline | Ejercicio | Procesamiento |
-| --- | --- | --- |
-| [sars-cov2-small-rna-qc](pipelines/sars-cov2-small-rna-qc.pipeline) | 1 | Adaptador Illumina, Q30, recorte de 3 bases, cola poli-A y longitud 10–35 nt. |
-| [metagenomics-paired-qc](pipelines/metagenomics-paired-qc.pipeline) | 2 | Recorte de 10 bases en 5′ en ambas lecturas y 10 bases en 3′ en R2. |
-| [mirna-precursor-qc](pipelines/mirna-precursor-qc.pipeline) | 3 | Adaptadores 5′/3′, Q10 y longitud 17–30 nt. |
+| Pipeline | Procesamiento |
+| --- | --- |
+| [sars-cov2-small-rna-qc](pipelines/sars-cov2-small-rna-qc.pipeline) | Adaptador Illumina, Q30, recorte de 3 bases, cola poli-A y longitud 10–35 nt. |
+| [metagenomics-paired-qc](pipelines/metagenomics-paired-qc.pipeline) | Recorte de 10 bases en 5′ en ambas lecturas y 10 bases en 3′ en R2. |
+| [mirna-precursor-qc](pipelines/mirna-precursor-qc.pipeline) | Adaptadores 5′/3′, Q10 y longitud 17–30 nt. |
 
-Todas incluyen FastQC antes/después y un informe comparativo MultiQC. Son
-adaptaciones del tutorial *Quality control and data preprocessing* del
-29/09/2026; consulta [procedencia y diferencias](SOURCES.md).
+Todas incluyen FastQC antes/después y un informe comparativo MultiQC. Consulta
+las [notas de procesamiento y documentación de las herramientas](SOURCES.md).
 
 ## Preparar las herramientas
 
@@ -78,14 +79,14 @@ ejecución utiliza argumentos separados, sin evaluar un shell.
    en las entradas del paso **Stage inputs**.
 4. Revisa adaptadores y parámetros, valida y ejecuta. El primer paso crea una
    copia de las entradas bajo nombres estables dentro de `steps/`; los originales
-   se conservan. El ejercicio 1 procesa una muestra por carpeta de trabajo.
+   se conservan. La pipeline de RNA pequeño procesa una muestra por carpeta de trabajo.
 5. Abre `outputs/comparison/multiqc_report.html`. Los recortes y sus informes
    quedan en `steps/` y `outputs/`. El estado y los logs permanecen en la carpeta
    de trabajo, dentro de `.pipeline-manager/`.
 
-Para probar sin los datos del curso, genera FASTQ sintéticos originales con
+Para probar el flujo con datos sintéticos, genera FASTQ con
 `python3 scripts/make_demo_data.py --output /ruta/al/trabajo/Input`. Sirven para
-comprobar el flujo técnico; no reproducen los resultados biológicos del curso.
+comprobar el flujo técnico de extremo a extremo.
 
 ## Validación y contribuciones
 
